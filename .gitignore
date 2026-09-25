@@ -1,1 +1,5 @@
 /target
+.env
+bedrock-token.sh
+regslop_sandbox/
+regslop_config.toml
