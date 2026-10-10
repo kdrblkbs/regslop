@@ -1,3 +1,4 @@
 /target
-/.token
+.env
+bedrock-token.sh
 /repos_foo_bar
