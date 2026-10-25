@@ -16,6 +16,7 @@ const CONFIG_PATH: &str = "regslop_config.toml";
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct GitConfig {
+    provider: git::Provider,
     #[serde(default)]
     token: String,
     in_repos: Vec<String>,
@@ -52,15 +53,16 @@ fn load_config() -> anyhow::Result<Config> {
 }
 
 fn clone_repos(
+    provider: git::Provider,
     git_token: &str,
     in_repos: &[String],
     out_repo: &str,
     sandbox: &util::Sandbox,
 ) -> anyhow::Result<()> {
     for repo in in_repos {
-        git::clone(git_token, &sandbox.in_dir, repo)?;
+        git::clone(provider, git_token, &sandbox.in_dir, repo)?;
     }
-    git::clone(git_token, &sandbox.out_dir, out_repo)?;
+    git::clone(provider, git_token, &sandbox.out_dir, out_repo)?;
     Ok(())
 }
 
@@ -72,6 +74,7 @@ fn main() -> anyhow::Result<()> {
     // there is probably a crate that does all of this
     let sandbox = util::prepare_sandbox(SANDBOX_ROOT, SANDBOX_IN, SANDBOX_OUT)?;
     clone_repos(
+        config.git.provider,
         &config.git.token,
         &config.git.in_repos,
         &config.git.out_repo,

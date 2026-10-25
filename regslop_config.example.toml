@@ -1,4 +1,6 @@
 [git]
+# github or gitlab (also self-hosted, the host is taken from the repo urls)
+provider = "github"
 token = "<todo insert token>"
 in_repos = [
     "https://github.com/example-org/inventory-service.git",
@@ -12,7 +14,7 @@ max_iterations = 128
 client_timeout_mins = 10
 max_tokens = 8192
 base_url = "https://bedrock-runtime.eu-central-1.amazonaws.com"
-model = "eu.amazon.nova-lite-v1:0"
+model = "eu.anthropic.claude-sonnet-5-5"
 
 system_prompt = '''
 You are a senior regulatory documentation specialist with a strong software engineering background. You review, write and maintain regulatory documentation for software products (e.g. test documentation, architecture documentation, backup/recovery documentation). Every statement you write is grounded in evidence from the actual source code and repository contents.

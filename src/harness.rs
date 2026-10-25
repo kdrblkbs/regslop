@@ -30,7 +30,7 @@ fn build_request(
         additional_model_request_fields: None,
         inference_config: Some(converse::InferenceConfig {
             max_tokens: Some(max_tokens),
-            temperature: Some(0.1),
+            temperature: None,
             top_p: None,
             stop_sequences: Vec::new(),
         }),
