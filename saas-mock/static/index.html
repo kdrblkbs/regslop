@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>regslop as a service</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="landing">
+  <header class="topbar">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="logo-mark">rs</span>regslop <small>proposal</small></a>
+      <nav>
+        <a href="#what">What it is</a>
+        <a href="#how">How it works</a>
+        <a href="#service">The service</a>
+        <a href="#questions">Open questions</a>
+        <a class="btn primary" href="/app">Open the mock</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="wrap hero hero-single">
+      <div>
+        <span class="eyebrow">Internal proposal · draft</span>
+        <h1>Running regslop as an internal service</h1>
+        <p class="lead">
+          regslop keeps regulatory documentation in line with the code it describes. Today it is a
+          command-line tool: you write a <code>regslop_config.toml</code>, provide tokens and run it
+          yourself. This page proposes hosting it as an internal service. Teams register their
+          software product once, then start a run from the browser and review the result in git.
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="/app">Open the mock</a>
+          <a class="btn" href="#service">What the service offers</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="what">
+      <div class="wrap">
+        <h2>What regslop is</h2>
+        <p class="intro">Regulated software needs documents such as a test concept, architecture
+          documentation or a backup and recovery concept. Writing them is tedious, and keeping them
+          current as the code changes is worse. regslop is an agent that reads the source code and
+          brings those documents up to date.</p>
+        <div class="grid grid-3">
+          <div class="card feature"><h3>Evidence only</h3><p>Every statement is grounded in the repositories: a file, a test, a CI job, a configuration value. It never invents test results, approvals, dates or people.</p></div>
+          <div class="card feature"><h3>Placeholders instead of guesses</h3><p>When something can't be determined from the code, such as an approver or a document ID, regslop inserts a numbered <code>[[TODO-NNN: …]]</code> placeholder where the value belongs.</p></div>
+          <div class="card feature"><h3>A status report per run</h3><p>Open tasks with the likely owner, findings that need human judgment, every change with its evidence, and the chapters it confirmed without changes.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <div class="wrap">
+        <h2>How regslop works today</h2>
+        <p class="intro">One run reviews one document. Everything the CLI needs is in a single
+          configuration file.</p>
+        <ol class="pipeline">
+          <li><span class="n">1</span><div><h3>Load <code>regslop_config.toml</code></h3><p><code>[git]</code>: provider (GitHub or GitLab, including self-managed), token, <code>in_repos</code> (one or more source repositories) and <code>out_repo</code> (the documentation repository). <code>[bedrock]</code>: model, endpoint, limits, and the system and task prompts.</p></div></li>
+          <li><span class="n">2</span><div><h3>Prepare a sandbox and clone</h3><p>A fresh <code>regslop_sandbox/</code> directory with <code>in/</code> for the source repositories and <code>out/</code> for the documentation repository. The git token is passed as an HTTPS-only header scoped to the repository's origin, so it is never written to disk and never shown to the model.</p></div></li>
+          <li><span class="n">3</span><div><h3>Agent loop on Amazon Bedrock</h3><p>The model gets three tools: <code>list_files</code>, <code>read_file</code> and <code>write_file</code>. They are confined to the sandbox, refuse <code>.git</code> and won't follow symlinks out of it. The loop runs until the model ends its turn, or stops after <code>max_iterations</code>.</p></div></li>
+          <li><span class="n">4</span><div><h3>Result</h3><p>The updated chapters and <code>REGULATORY_STATUS_REPORT.md</code> are written to <code>out/</code>, following the templates and the conventions in the documentation repository's README.</p></div></li>
+        </ol>
+        <div class="alert warn" style="margin-top:20px">
+          <span><strong>Not implemented in regslop yet:</strong> pushing the result as a branch,
+            opening a merge request, and reading tokens from the environment. The mock assumes
+            pushing a branch works, and keeps a place for the merge request link.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="service">
+      <div class="wrap">
+        <h2>What the service should offer</h2>
+        <p class="intro">The service is a thin layer around the same engine. It stores what is in
+          <code>regslop_config.toml</code> today, manages the credentials, runs regslop on demand
+          and keeps the results visible.</p>
+        <div class="grid grid-2">
+          <div class="card feature"><span class="n">A</span><h3>Register a software product</h3><p>A product is one to many source repositories plus one documentation repository, which is exactly the <code>[git]</code> section of the config. The documents to maintain (test concept, architecture, …) are selected per product. The remaining config values have sensible defaults and can be changed per product.</p></div>
+          <div class="card feature"><span class="n">B</span><h3>Onboarding</h3><p>If the documentation repository doesn't exist yet, the service offers to create it. It pushes a README with the conventions regslop relies on, plus a template with instruction comments for every chapter of the selected documents.</p></div>
+          <div class="card feature"><span class="n">C</span><h3>Trigger a run</h3><p>One click per document starts regslop with the product's configuration. Progress is visible live: clone, each iteration, every tool call, and token usage.</p></div>
+          <div class="card feature"><span class="n">D</span><h3>Results with links to git</h3><p>The status report is rendered in the browser, together with the diff and the open TODOs. Every result links to its branch, its commit and the report file in git. Once regslop opens merge requests, the merge request is linked there too.</p></div>
+        </div>
+
+        <h3 style="margin:36px 0 12px">From config file to product settings</h3>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>regslop_config.toml</th><th>In the service</th></tr></thead>
+            <tbody>
+              <tr><td><code>git.provider</code></td><td>Product → Git provider</td></tr>
+              <tr><td><code>git.in_repos</code></td><td>Product → source repositories (one or more)</td></tr>
+              <tr><td><code>git.out_repo</code></td><td>Product → documentation repository; created by onboarding if it doesn't exist</td></tr>
+              <tr><td><code>git.token</code></td><td>Git connection per host and group, managed centrally rather than per product</td></tr>
+              <tr><td><code>bedrock.model</code>, <code>base_url</code>, <code>max_iterations</code>, <code>max_tokens</code>, <code>client_timeout_mins</code></td><td>Product → model settings, prefilled with the service defaults</td></tr>
+              <tr><td><code>bedrock.system_prompt</code></td><td>Service default (today's prompt from the example config), can be overridden per product</td></tr>
+              <tr><td><code>bedrock.task_prompt</code></td><td>One per document, generated from a template and editable. <code>{{date}}</code> is filled in when the run starts</td></tr>
+              <tr><td><code>bedrock.token</code></td><td>Service level, never per product</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted" style="margin-top:10px">Each document of a product can be exported as a <code>regslop_config.toml</code> that the CLI accepts unchanged, which is useful for debugging a run locally.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <h2>Why a service and not just the CLI</h2>
+        <div class="grid grid-2">
+          <div class="card feature"><h3>No setup per team</h3><p>No local Rust toolchain or CI job to wire up, and no TOML to maintain. Registering a product takes a few minutes.</p></div>
+          <div class="card feature"><h3>Credentials in one place</h3><p>Git and Bedrock tokens are managed centrally instead of sitting in config files on laptops.</p></div>
+          <div class="card feature"><h3>Visible to QA and regulatory affairs</h3><p>The people who own the documents can read status reports and open TODOs without cloning repositories.</p></div>
+          <div class="card feature"><h3>One prompt, maintained once</h3><p>Improvements to the system prompt and task templates reach every product immediately.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="questions">
+      <div class="wrap">
+        <h2>Not in a first version</h2>
+        <ul class="plain-list">
+          <li>Automatic triggers, such as on push to the default branch or nightly.</li>
+          <li>Filling in placeholders from the browser. For now they are edited in git, during review.</li>
+          <li>Custom document types beyond the four templates.</li>
+        </ul>
+        <h2 style="margin-top:40px">Open questions</h2>
+        <details><summary>Where do runs execute?</summary><p>One container per run on the internal cluster, or jobs on the existing CI runners. The sandbox is a plain directory today, so a container adds a second layer of isolation.</p></details>
+        <details><summary>Which Bedrock account and region pay for the runs?</summary><p>A run costs roughly one to three dollars with the current default model. A shared account with per-product cost reporting is probably enough.</p></details>
+        <details><summary>Who can register products and start runs?</summary><p>Mapping SSO groups to git groups would let anyone with access to the repositories use them in the service, and nobody else.</p></details>
+        <details><summary>How long are run logs kept?</summary><p>Timelines contain file paths and model messages, and reports contain references to code. They should probably follow the retention of the documentation repository itself.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap spread">
+      <span>regslop service · mock for discussion, nothing here is connected to real systems.</span>
+      <a href="/app">Open the mock →</a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>regslop service</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="logo" href="/"><span class="logo-mark">rs</span>regslop <small>service</small></a>
+      <nav class="nav" id="nav">
+        <a href="#/" data-nav="overview">Overview</a>
+        <a href="#/products" data-nav="products">Products</a>
+        <a href="#/runs" data-nav="runs">Runs</a>
+        <a href="#/todos" data-nav="todos">Open TODOs <span class="count" id="task-count" hidden></span></a>
+        <a href="#/settings" data-nav="settings">Settings</a>
+      </nav>
+      <div class="sidebar-foot" id="org"></div>
+    </aside>
+    <main class="main" id="view" aria-live="polite"></main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
