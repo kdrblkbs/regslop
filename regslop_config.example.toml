@@ -1,10 +1,13 @@
 [git]
+# github or gitlab
+provider = "github"
+base_url = "https://github.com"
 token = "<todo insert token>"
 in_repos = [
-    "https://github.com/example-org/inventory-service.git",
-    "https://github.com/example-org/inventory-web.git",
+    { repository_path = "example-org/inventory-service", source_branch = "main" },
+    { repository_path = "example-org/inventory-web", source_branch = "main" },
 ]
-out_repo = "https://github.com/example-org/inventory-regulatory.git"
+out_repo = { repository_path = "example-org/inventory-regulatory", source_branch = "main" }
 
 [bedrock]
 token = "<todo insert token>"

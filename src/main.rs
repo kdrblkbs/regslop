@@ -15,15 +15,6 @@ const CONFIG_PATH: &str = "regslop_config.toml";
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct GitConfig {
-    #[serde(default)]
-    token: String,
-    in_repos: Vec<String>,
-    out_repo: String,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct BedrockConfig {
     max_iterations: usize,
     client_timeout_mins: u64,
@@ -39,7 +30,7 @@ struct BedrockConfig {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Config {
-    git: GitConfig,
+    git: git::GitConfig,
     bedrock: BedrockConfig,
 }
 
@@ -51,17 +42,22 @@ fn load_config() -> anyhow::Result<Config> {
     Ok(config)
 }
 
-fn clone_repos(
-    git_token: &str,
-    in_repos: &[String],
-    out_repo: &str,
-    sandbox: &util::Sandbox,
-) -> anyhow::Result<()> {
-    for repo in in_repos {
-        git::clone(git_token, &sandbox.in_dir, repo)?;
+fn clone_repos(git_config: &git::GitConfig, sandbox: &util::Sandbox) -> anyhow::Result<()> {
+    for repo in &git_config.in_repos {
+        git::clone(
+            git_config,
+            &sandbox.in_dir,
+            &repo.repository_path,
+            repo.source_branch.as_deref(),
+        )?;
     }
-    git::clone(git_token, &sandbox.out_dir, out_repo)?;
-    Ok(())
+    let out_repo = &git_config.out_repo;
+    git::clone(
+        git_config,
+        &sandbox.out_dir,
+        &out_repo.repository_path,
+        out_repo.source_branch.as_deref(),
+    )
 }
 
 fn main() -> anyhow::Result<()> {
@@ -71,12 +67,18 @@ fn main() -> anyhow::Result<()> {
     // TODO: error if any token == ""
     // there is probably a crate that does all of this
     let sandbox = util::prepare_sandbox(SANDBOX_ROOT, SANDBOX_IN, SANDBOX_OUT)?;
-    clone_repos(
-        &config.git.token,
-        &config.git.in_repos,
-        &config.git.out_repo,
-        &sandbox,
-    )?;
+    clone_repos(&config.git, &sandbox)?;
 
     harness::run(&sandbox.root, &config.bedrock)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn example_config_deserializes() {
+        toml::from_str::<Config>(include_str!("../regslop_config.example.toml"))
+            .expect("example config to match the config structs");
+    }
 }
