@@ -1,0 +1,9 @@
+# Files listed here are never sent to the Docker build ("build context").
+# Smaller context = faster builds, and secrets can't accidentally be baked
+# into an image.
+target/
+.git/
+regslop_sandbox/
+regslop_config.toml
+.env
+bedrock-token.sh
