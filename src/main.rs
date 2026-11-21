@@ -19,6 +19,7 @@ struct BedrockConfig {
     max_iterations: usize,
     client_timeout_mins: u64,
     max_tokens: u32,
+    temperature: Option<f32>,
     #[serde(default)]
     token: String,
     base_url: String,

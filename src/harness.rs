@@ -15,6 +15,7 @@ fn build_request(
     system_prompt: &str,
     messages: Vec<converse::Message>,
     max_tokens: u32,
+    temperature: Option<f32>,
 ) -> converse::Request {
     let tools = tools::get_all()
         .into_iter()
@@ -30,7 +31,7 @@ fn build_request(
         additional_model_request_fields: None,
         inference_config: Some(converse::InferenceConfig {
             max_tokens: Some(max_tokens),
-            temperature: Some(0.1),
+            temperature,
             top_p: None,
             stop_sequences: Vec::new(),
         }),
@@ -155,6 +156,7 @@ pub(crate) fn run(sandbox_root: &Path, bedrock_config: &BedrockConfig) -> anyhow
         &bedrock_config.system_prompt,
         vec![task_message],
         bedrock_config.max_tokens,
+        bedrock_config.temperature,
     );
 
     for i in 0..bedrock_config.max_iterations {
