@@ -14,6 +14,8 @@ token = "<todo insert token>"
 max_iterations = 128
 client_timeout_mins = 10
 max_tokens = 8192
+# optional: comment out or remove for models that reject it (e.g. newer claude models).
+temperature = 0.1
 base_url = "https://bedrock-runtime.eu-central-1.amazonaws.com"
 model = "eu.amazon.nova-lite-v1:0"
 
