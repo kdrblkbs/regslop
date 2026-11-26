@@ -1,4 +1,8 @@
+use std::path::Path;
+use std::path::PathBuf;
+
 use anyhow::Context;
+use clap::Parser;
 use serde::Deserialize;
 
 mod converse;
@@ -10,8 +14,14 @@ mod util;
 const SANDBOX_ROOT: &str = "./regslop_sandbox";
 const SANDBOX_IN: &str = "in";
 const SANDBOX_OUT: &str = "out";
-// TODO: this is probably configurable soon (TM)
-const CONFIG_PATH: &str = "regslop_config.toml";
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Path to the config file
+    #[arg(short, long, default_value("./regslop_config.toml"))]
+    config: PathBuf,
+}
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -35,11 +45,11 @@ struct Config {
     bedrock: BedrockConfig,
 }
 
-fn load_config() -> anyhow::Result<Config> {
-    let config_content = std::fs::read_to_string(CONFIG_PATH)
-        .with_context(|| format!("failed to read config file at {CONFIG_PATH}"))?;
+fn load_config(config_path: &Path) -> anyhow::Result<Config> {
+    let config_content = std::fs::read_to_string(config_path)
+        .with_context(|| format!("failed to read config file at {}", config_path.display()))?;
     let config: Config = toml::from_str(&config_content)
-        .with_context(|| format!("failed to deserialize config at {CONFIG_PATH}"))?;
+        .with_context(|| format!("failed to deserialize config at {}", config_path.display()))?;
     Ok(config)
 }
 
@@ -62,7 +72,8 @@ fn clone_repos(git_config: &git::GitConfig, sandbox: &util::Sandbox) -> anyhow::
 }
 
 fn main() -> anyhow::Result<()> {
-    let config = load_config()?;
+    let args = Args::parse();
+    let config = load_config(&args.config)?;
     // TODO: check if env contains git/bedrock token
     // TODO: token from env -> token from file
     // TODO: error if any token == ""
