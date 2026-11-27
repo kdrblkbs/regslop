@@ -26,7 +26,7 @@ docker build -t regslop:dev .
 
 ### Run the container
 
-regslop reads `regslop_config.toml` from its working directory and writes everything it produces into `./regslop_sandbox`. Inside the container, the working directory is `/work`.
+regslop reads its config from `./regslop_config.toml` in its working directory and writes everything it produces into `./regslop_sandbox`. Inside the container, the working directory is `/work`. To use a different config file, pass its path with `-c`/`--config`.
 
 Start with the example config:
 
@@ -56,6 +56,18 @@ docker run --rm \
   -v "$PWD/regslop_config.toml:/work/regslop_config.toml:ro" \
   regslop:dev
 ```
+
+**Custom config path.** Arguments after the image name are passed to regslop, so you can point it at a config somewhere else, e.g. a read-only secrets mount:
+
+```sh
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -v "$HOME/.config/regslop/prod.toml:/config/regslop.toml:ro" \
+  regslop:dev --config /config/regslop.toml
+```
+
+Run `regslop --help` for all options.
 
 > **Never mount a directory at `/work/regslop_sandbox`.** On every run regslop deletes that directory recursively. If it is a mount, regslop first **deletes everything inside the mounted directory on your machine** and only then fails, because the mount point itself can't be removed.
 
